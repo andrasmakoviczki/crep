@@ -1,6 +1,7 @@
 package hu.elte.computernetworks;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -19,7 +20,7 @@ public class MainApp extends Application {
     public void start(Stage stage) throws Exception {
 
         log.info("Starting Component-based Repartitioning demonstration application");
-
+        Platform.setImplicitExit(false);
         String fxmlFile = "/fxml/application.fxml";
         log.debug("Loading FXML for main view from: {}", fxmlFile);
         FXMLLoader loader = new FXMLLoader();

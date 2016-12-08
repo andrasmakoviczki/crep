@@ -1,28 +1,42 @@
 package hu.elte.computernetworks.model;
 
+import java.util.UUID;
+
 /**
  * Created by Andras Makoviczki on 2016. 11. 05..
  */
 public class Request {
-    private Integer id;
-    private Integer src;
-    private Integer dst;
-    private Integer length;
+    //region fields
+    private UUID id;
+    private UUID src;
+    private UUID dst;
     private Integer cost;
+    //endregion
 
-    public Request(Integer id, Integer src, Integer dst){
-        this(id,src,dst,1,1);
-    }
-
-    public Request(Integer id, Integer src, Integer dst,Integer cost){
-        this(id,src,dst,1,cost);
-    }
-
-    public Request(Integer id, Integer src, Integer dst, Integer length, Integer cost) {
-        this.id = id;
+    //region constructor
+    public Request(UUID src, UUID dst, Integer cost) {
+        this.id = UUID.randomUUID();
         this.src = src;
         this.dst = dst;
-        this.length = length;
         this.cost = cost;
     }
+    //endregion
+
+    //region getter setter
+    public UUID getSrc() {
+        return src;
+    }
+
+    public UUID getDst() {
+        return dst;
+    }
+
+    public Integer getCost() {
+        return cost;
+    }
+
+    public void setCost(Integer cost) {
+        this.cost = cost;
+    }
+    //endregion
 }

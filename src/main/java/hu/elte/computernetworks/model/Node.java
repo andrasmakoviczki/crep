@@ -1,45 +1,43 @@
 package hu.elte.computernetworks.model;
 
-import hu.elte.computernetworks.model.Request;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Andras Makoviczki on 2016. 11. 05..
  */
 public class Node {
-    private Integer id;
-    private Integer clusterid;
+    //region fields
+    private UUID id;
+    private UUID clusterId;
     private List<Request> requests;
+    private List<Request> acceptedRequests;
+    //endregion
 
+    //region constructor
     public Node() {
     }
 
-    public Node(Integer id) {
-        this(id,0);
+    public Node(UUID clusterId) {
+        this.id = UUID.randomUUID();
+        this.clusterId = clusterId;
+        this.requests = new ArrayList<>();
+        this.acceptedRequests = new ArrayList<>();
     }
+    //endregion
 
-    public Node(Integer id, Integer clusterid) {
-        this.id = id;
-        this.clusterid = clusterid;
-        this.requests = new ArrayList<Request>();
-    }
-
-    public Integer getId() {
+    //region getter setter
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public UUID getClusterId() {
+        return clusterId;
     }
 
-    public Integer getClusterid() {
-        return clusterid;
-    }
-
-    public void setClusterid(Integer clusterid) {
-        this.clusterid = clusterid;
+    public void setClusterId(UUID clusterId) {
+        this.clusterId = clusterId;
     }
 
     public List<Request> getRequests() {
@@ -50,7 +48,30 @@ public class Node {
         this.requests = requests;
     }
 
-    public void addRequests(Integer dst) {
-        requests.add(new Request(5,id,dst));
+    public List<Request> getAcceptedRequests() {
+        return acceptedRequests;
     }
+
+    public void addRequests(UUID dst, Integer cost) {
+        requests.add(new Request(id, dst,cost));
+    }
+
+    public void addRequests(Request request) {
+        requests.add(request);
+    }
+
+    //Fogadott requests-ek nyílvántartása
+    public void acceptRequests(UUID dst,Integer cost){
+        acceptedRequests.add(new Request(dst,id,cost));
+    }
+
+    public void acceptRequests(Request request){
+        acceptedRequests.add(request);
+    }
+
+    public void setAcceptedRequests(List<Request> acceptedRequests) {
+        this.acceptedRequests = acceptedRequests;
+    }
+
+    //endregion
 }
