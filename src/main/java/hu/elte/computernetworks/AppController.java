@@ -37,8 +37,6 @@ import static java.lang.Integer.MAX_VALUE;
  * Created by Andras Makoviczki on 2016. 11. 16..
  */
 public class AppController implements Initializable {
-    private final IntegerProperty clusterSize;
-    private final IntegerProperty migrationCost;
     //region FXML objects
     @FXML
     private BorderPane borderPane;
@@ -52,23 +50,20 @@ public class AppController implements Initializable {
     private ContextMenu contextMenu;
     @FXML
     private Stage stage;
-    //endregion
     @FXML
     private Canvas canvas;
     @FXML
     private StatusBar statusBar;
+    //endregion
+
     //region fields
     private GraphicsContext gc;
     private Network network;
+    private final IntegerProperty clusterSize;
+    private final IntegerProperty migrationCost;
     private Double fieldHeight;
     private Double fieldWidth;
     //endregion
-
-    public AppController() {
-        this.network = new Network();
-        this.clusterSize = new SimpleIntegerProperty(network.getClusterSize());
-        this.migrationCost = new SimpleIntegerProperty(network.getMigrationCost());
-    }
 
     //region constructor
     public void initialize(URL location, ResourceBundle resources) {
@@ -225,6 +220,12 @@ public class AppController implements Initializable {
                 errorDialog("Invariant violation! The spare space have to be more than half of any cluster size!");
             }
         });
+    }
+
+    public AppController() {
+        this.network = new Network();
+        this.clusterSize = new SimpleIntegerProperty(network.getClusterSize());
+        this.migrationCost = new SimpleIntegerProperty(network.getMigrationCost());
     }
     //endregion
 
