@@ -1,0 +1,126 @@
+{
+  "clusters": [
+    {
+      "id": "a00122ee-0457-4d3a-8ef0-a6ebb4c0b378",
+      "nodes": [
+        {
+          "id": "38a597e5-23bb-4622-8838-6550fcbebf06",
+          "clusterId": "a00122ee-0457-4d3a-8ef0-a6ebb4c0b378",
+          "requests": []
+        },
+        {
+          "id": "6b805535-7b33-4042-ae1e-6a65cc2c6d5f",
+          "clusterId": "a00122ee-0457-4d3a-8ef0-a6ebb4c0b378",
+          "requests": []
+        },
+        {
+          "id": "4ba0a48c-0d31-488b-a872-c9df0016a266",
+          "clusterId": "a00122ee-0457-4d3a-8ef0-a6ebb4c0b378",
+          "requests": []
+        }
+      ]
+    },
+    {
+      "id": "384ce338-694b-49c4-8c19-77e90829f89a",
+      "nodes": [
+        {
+          "id": "c3d2a052-5671-4d98-bffd-c4bf5a638008",
+          "clusterId": "384ce338-694b-49c4-8c19-77e90829f89a",
+          "requests": []
+        },
+        {
+          "id": "697c8b23-d39f-4604-ab21-2b5e7f4618af",
+          "clusterId": "384ce338-694b-49c4-8c19-77e90829f89a",
+          "requests": []
+        },
+        {
+          "id": "3a65ba76-f859-4633-bd26-5eaef7bb9723",
+          "clusterId": "384ce338-694b-49c4-8c19-77e90829f89a",
+          "requests": []
+        }
+      ]
+    },
+    {
+      "id": "56a49cd4-0ef2-4c7d-9d79-d9bdf4e1cdfc",
+      "nodes": [
+        {
+          "id": "035c3844-dfba-4ad9-b809-27051cc3ea6c",
+          "clusterId": "56a49cd4-0ef2-4c7d-9d79-d9bdf4e1cdfc",
+          "requests": []
+        },
+        {
+          "id": "7429e55b-8a67-4107-b9cd-e89bb7efbc1f",
+          "clusterId": "56a49cd4-0ef2-4c7d-9d79-d9bdf4e1cdfc",
+          "requests": []
+        },
+        {
+          "id": "5e47148a-b862-482c-b9fe-c0260e616bf8",
+          "clusterId": "56a49cd4-0ef2-4c7d-9d79-d9bdf4e1cdfc",
+          "requests": []
+        }
+      ]
+    },
+    {
+      "id": "d63a83c9-5fc4-46c7-a008-d2f27d8965fd",
+      "nodes": [
+        {
+          "id": "814956df-d270-4110-9cd6-5527279e7efe",
+          "clusterId": "d63a83c9-5fc4-46c7-a008-d2f27d8965fd",
+          "requests": []
+        },
+        {
+          "id": "baea149f-15d2-4fca-9d7b-4f280255dce9",
+          "clusterId": "d63a83c9-5fc4-46c7-a008-d2f27d8965fd",
+          "requests": []
+        },
+        {
+          "id": "46ee35c1-fabd-44fc-8ecf-646491d35c25",
+          "clusterId": "d63a83c9-5fc4-46c7-a008-d2f27d8965fd",
+          "requests": []
+        }
+      ]
+    },
+    {
+      "id": "22a87d2f-a824-4f27-bad7-ee38e1209143",
+      "nodes": [
+        {
+          "id": "f164de99-c9a8-46a9-ac79-b19f0221c57e",
+          "clusterId": "22a87d2f-a824-4f27-bad7-ee38e1209143",
+          "requests": []
+        },
+        {
+          "id": "0253b3f6-8f72-4875-8a5d-80b279930bc5",
+          "clusterId": "22a87d2f-a824-4f27-bad7-ee38e1209143",
+          "requests": []
+        },
+        {
+          "id": "89b97797-5dfc-4244-8884-f568f1f43e9e",
+          "clusterId": "22a87d2f-a824-4f27-bad7-ee38e1209143",
+          "requests": []
+        }
+      ]
+    },
+    {
+      "id": "c4ff5acf-fe1e-42ff-ba7f-c3303b99af5d",
+      "nodes": []
+    },
+    {
+      "id": "c131cf1f-265d-4bd3-8ee4-5189361e3219",
+      "nodes": []
+    },
+    {
+      "id": "d2e42952-81e4-4df0-b758-13c78878a575",
+      "nodes": []
+    },
+    {
+      "id": "c80ce4e7-5a81-4262-84c9-d5b9d61ddae2",
+      "nodes": []
+    },
+    {
+      "id": "b4eec34c-ad48-4e38-b491-5a1d1f5fda5a",
+      "nodes": []
+    }
+  ],
+  "migrationCost": 3,
+  "clusterSize": 6
+}
