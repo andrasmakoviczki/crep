@@ -11,8 +11,8 @@ import java.io.IOException;
  */
 public class Load {
     //region fields
-    private ObjectMapper mapper;
-    private String fileName;
+    private final ObjectMapper mapper;
+    private final String fileName;
     //endregion
 
     //region constructor
@@ -20,14 +20,12 @@ public class Load {
         this.fileName = fileName;
         this.mapper = new ObjectMapper();
     }
-
-    public Load(){
-        this("C:\\Users\\andris.DESKTOP-BQJ4DSD\\Desktop\\test.json");
-    }
     //endregion
 
+    //region util
     public Network read() throws IOException {
-        Network network = mapper.readValue(new File(fileName),Network.class);
-        return network;
+        return mapper.readValue(new File(fileName), Network.class);
+
     }
+    //endregion
 }

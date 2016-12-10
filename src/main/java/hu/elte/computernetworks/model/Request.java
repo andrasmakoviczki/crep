@@ -7,18 +7,14 @@ import java.util.UUID;
  */
 public class Request {
     //region fields
-    private UUID id;
-    private UUID src;
-    private UUID dst;
-    private Integer cost;
+    private final UUID src;
+    private final UUID dst;
     //endregion
 
     //region constructor
-    public Request(UUID src, UUID dst, Integer cost) {
-        this.id = UUID.randomUUID();
+    public Request(UUID src, UUID dst) {
         this.src = src;
         this.dst = dst;
-        this.cost = cost;
     }
     //endregion
 
@@ -29,14 +25,6 @@ public class Request {
 
     public UUID getDst() {
         return dst;
-    }
-
-    public Integer getCost() {
-        return cost;
-    }
-
-    public void setCost(Integer cost) {
-        this.cost = cost;
     }
     //endregion
 }

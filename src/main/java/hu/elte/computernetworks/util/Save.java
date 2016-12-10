@@ -1,10 +1,7 @@
 package hu.elte.computernetworks.util;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import hu.elte.computernetworks.model.Network;
-import hu.elte.computernetworks.model.Cluster;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +11,8 @@ import java.io.IOException;
  */
 public class Save {
     //region fields
-    private ObjectMapper mapper;
-    private String fileName;
+    private final ObjectMapper mapper;
+    private final String fileName;
     //endregion
 
     //region constructor
@@ -23,14 +20,11 @@ public class Save {
         this.mapper = new ObjectMapper();
         this.fileName = fileName;
     }
-
-    public Save() {
-        this("C:\\Users\\andris.DESKTOP-BQJ4DSD\\Desktop\\test.json");
-    }
     //endregion
 
+    //region util
     public void write(Network network) throws IOException {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(new File(fileName), network);
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(fileName), network);
     }
-
+    //endregion
 }

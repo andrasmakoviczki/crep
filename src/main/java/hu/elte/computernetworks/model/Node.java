@@ -48,30 +48,18 @@ public class Node {
         this.requests = requests;
     }
 
-    public List<Request> getAcceptedRequests() {
-        return acceptedRequests;
+    public void setAcceptedRequests(List<Request> acceptedRequests) {
+        this.acceptedRequests = acceptedRequests;
     }
+    //endregion
 
-    public void addRequests(UUID dst, Integer cost) {
-        requests.add(new Request(id, dst,cost));
-    }
-
+    //region util
     public void addRequests(Request request) {
         requests.add(request);
     }
 
-    //Fogadott requests-ek nyílvántartása
-    public void acceptRequests(UUID dst,Integer cost){
-        acceptedRequests.add(new Request(dst,id,cost));
-    }
-
-    public void acceptRequests(Request request){
+    public void addAcceptRequests(Request request) {
         acceptedRequests.add(request);
     }
-
-    public void setAcceptedRequests(List<Request> acceptedRequests) {
-        this.acceptedRequests = acceptedRequests;
-    }
-
     //endregion
 }

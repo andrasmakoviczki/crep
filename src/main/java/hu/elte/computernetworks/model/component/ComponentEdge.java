@@ -1,8 +1,5 @@
 package hu.elte.computernetworks.model.component;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -10,26 +7,21 @@ import java.util.UUID;
  */
 public class ComponentEdge {
     //region fields
+    private final UUID srcNodeId;
+    private final UUID dstNodeId;
     private UUID srcComponentId;
     private UUID dstComponentId;
-    private UUID srcNodeId;
-    private UUID dstNodeId;
     private Integer weight;
     //endregion
 
     //region constructor
-    public ComponentEdge(){
-    }
-
     public ComponentEdge(UUID srcComponentId, UUID dstComponentId, UUID srcNodeId, UUID dstNodeId, Integer weight) {
         this.srcComponentId = srcComponentId;
         this.dstComponentId = dstComponentId;
-        this.srcNodeId = srcNodeId;//new HashSet<>();
-        //this.srcNodeId.add(srcComponentId);
+        this.srcNodeId = srcNodeId;
         this.dstNodeId = dstNodeId;
         this.weight = weight;
     }
-
     //endregion
 
     //region getter setter
@@ -37,20 +29,12 @@ public class ComponentEdge {
         return srcComponentId;
     }
 
-    public UUID getDstComponentId() {
-        return dstComponentId;
-    }
-
-    public Integer getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Integer weight) {
-        this.weight = weight;
-    }
-
     public void setSrcComponentId(UUID srcComponentId) {
         this.srcComponentId = srcComponentId;
+    }
+
+    public UUID getDstComponentId() {
+        return dstComponentId;
     }
 
     public void setDstComponentId(UUID dstComponentId) {
@@ -61,17 +45,16 @@ public class ComponentEdge {
         return srcNodeId;
     }
 
-    public void setSrcNodeId(UUID srcNodeId) {
-        this.srcNodeId = srcNodeId;
-    }
-
     public UUID getDstNodeId() {
         return dstNodeId;
     }
 
-    public void setDstNodeId(UUID dstNodeId) {
-        this.dstNodeId = dstNodeId;
+    public Integer getWeight() {
+        return weight;
     }
 
+    public void setWeight(Integer weight) {
+        this.weight = weight;
+    }
     //endregion
 }

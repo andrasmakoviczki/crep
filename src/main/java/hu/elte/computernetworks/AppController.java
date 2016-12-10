@@ -6,10 +6,8 @@ import hu.elte.computernetworks.model.Request;
 import hu.elte.computernetworks.util.Load;
 import hu.elte.computernetworks.util.Save;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Bounds;
@@ -32,316 +30,201 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+
+import static java.lang.Integer.MAX_VALUE;
 
 /**
  * Created by Andras Makoviczki on 2016. 11. 16..
  */
 public class AppController implements Initializable {
-    @FXML
-    private Button stopButton;
+    private final IntegerProperty clusterSize;
+    private final IntegerProperty migrationCost;
     //region FXML objects
-    @FXML
-    private Button addClusterButton;
-    @FXML
-    private Button autoCrep;
-    @FXML
-    private CheckBox showRequestsBox;
-    @FXML
-    private Spinner migrationCostSpinner;
-    @FXML
-    private MenuItem newMenuItem;
     @FXML
     private BorderPane borderPane;
     @FXML
-    private Button addRequestsButton;
+    private CheckBox showRequestsBox;
+    @FXML
+    private Spinner<Integer> migrationCostSpinner;
+    @FXML
+    private Spinner<Integer> clusterSizeSpinner;
     @FXML
     private ContextMenu contextMenu;
     @FXML
-    private MenuItem addNodeMenuItem;
-    @FXML
-    private MenuItem removeNodeMenuItem;
-    @FXML
-    private MenuItem removeClusterMenuItem;
-    @FXML
-    private MenuItem loadMenuItem;
-    @FXML
-    private MenuItem saveMenuItem;
-    @FXML
-    private MenuItem closeMenuItem;
-    @FXML
     private Stage stage;
+    //endregion
     @FXML
     private Canvas canvas;
     @FXML
     private StatusBar statusBar;
-    @FXML
-    private Button startButton;
-    @FXML
-    private Spinner clusterSizeSpinner;
-    private ScheduledExecutorService scheduledExecutorService;
-    //endregion
-
     //region fields
-    private Double fieldHeight;
-    private Double fieldWidth;
-
     private GraphicsContext gc;
     private Network network;
+    private Double fieldHeight;
+    private Double fieldWidth;
     //endregion
-
-    //region calculate
-    private Boolean isCluster(Double x, Double y) {
-        Integer factor = factorization(network.getClusters().size());
-
-        Integer processed = 0;
-        for (Integer j = 0; j < factor; j++) {
-            for (Integer i = 0; i < factor; i++) {
-                if (processed < network.getClusters().size()) {
-                    Double minX = i * fieldWidth;
-                    Double maxX = minX + fieldWidth;
-                    Double minY = j * fieldHeight;
-                    Double maxY = minY + fieldHeight;
-                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-                        return true;
-                    }
-
-                    processed = processed + 1;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private Integer findCluster(Double x, Double y) {
-        Integer factor = factorization(network.getClusters().size());
-        Integer processed = 0;
-
-        for (Integer j = 0; j < factor; j++) {
-            for (Integer i = 0; i < factor; i++) {
-                if (processed < network.getClusters().size()) {
-                    Double minX = i * fieldWidth;
-                    Double maxX = minX + fieldWidth;
-                    Double minY = j * fieldHeight;
-                    Double maxY = minY + fieldHeight;
-                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-                        return i + j * factor;
-                        //return network.getClusters().get(i * factor + j * factor);
-                    }
-
-                    processed = processed + 1;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private Integer factorization(Integer num) {
-        Double root = Math.ceil(Math.sqrt(Integer.valueOf(num).doubleValue()));
-        return root.intValue();
-    }
-    //endregion
-
-    //region initialize
-    public void initialize(URL location, ResourceBundle resources) {
-        initial(1);
-    }
-
-    private void initial(Integer factor) {
-        gc = canvas.getGraphicsContext2D();
-        drawBase(factor);
-        setContextMenu();
-        setSpinner();
-        this.scheduledExecutorService = Executors.newScheduledThreadPool(5);
-    }
-
 
     public AppController() {
         this.network = new Network();
-        test();
+        this.clusterSize = new SimpleIntegerProperty(network.getClusterSize());
+        this.migrationCost = new SimpleIntegerProperty(network.getMigrationCost());
     }
 
-    private void setSpinner(){
-        SpinnerValueFactory spinnerFactoryClusterSize = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE,network.getClusterSize());
+    //region constructor
+    public void initialize(URL location, ResourceBundle resources) {
+        initial();
+    }
+
+    private void initial() {
+        gc = canvas.getGraphicsContext2D();
+        drawBase(1);
+        setContextMenu();
+        setSpinner();
+    }
+
+    private void setSpinner() {
+        SpinnerValueFactory<Integer> spinnerFactoryClusterSize = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, MAX_VALUE, network.getClusterSize());
         clusterSizeSpinner.setValueFactory(spinnerFactoryClusterSize);
         clusterSizeSpinner.setEditable(true);
-        clusterSizeSpinner.valueProperty().addListener(new ChangeListener<Integer>() {
-            @Override
-            public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                network.setClusterSize(newValue);
-                drawCanvas(network);
-            }
+        clusterSizeSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
+            network.setClusterSize(Integer.parseInt(String.valueOf(newValue)));
+            drawCanvas(network);
         });
+        clusterSize.addListener((observable, oldValue, newValue) -> spinnerFactoryClusterSize.setValue(Integer.parseInt(String.valueOf(newValue))));
 
-        SpinnerValueFactory spinnerFactoryMigrationCost = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE,network.getMigrationCost());
+        SpinnerValueFactory<Integer> spinnerFactoryMigrationCost = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, MAX_VALUE, network.getMigrationCost());
         migrationCostSpinner.setValueFactory(spinnerFactoryMigrationCost);
         migrationCostSpinner.setEditable(true);
-        migrationCostSpinner.valueProperty().addListener(new ChangeListener<Integer>() {
-            @Override
-            public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                network.setMigrationCost(newValue);
-            }
-        });
+        migrationCostSpinner.valueProperty().addListener((observable, oldValue, newValue) -> network.setMigrationCost(Integer.parseInt(String.valueOf(newValue))));
+        migrationCost.addListener((observable, oldValue, newValue) -> spinnerFactoryMigrationCost.setValue(Integer.parseInt(String.valueOf(newValue))));
     }
 
     private void setContextMenu() {
         this.contextMenu = new ContextMenu();
-        this.addNodeMenuItem = new MenuItem("Add node");
-        this.removeNodeMenuItem = new MenuItem("Remove node");
-        this.removeClusterMenuItem = new MenuItem("Remove cluster");
+        MenuItem addNodeMenuItem = new MenuItem("Add node");
+        MenuItem removeNodeMenuItem = new MenuItem("Remove node");
+        MenuItem removeClusterMenuItem = new MenuItem("Remove cluster");
 
         contextMenu.getItems().add(addNodeMenuItem);
         contextMenu.getItems().add(removeNodeMenuItem);
         contextMenu.getItems().add(removeClusterMenuItem);
 
         //ContextMenu
-        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-            public void handle(MouseEvent event) {
-                if (event.getButton() == MouseButton.SECONDARY) {
-                    //Canvas pozíciója a scene-en
-                    Bounds boundsCanvas = canvas.getBoundsInLocal();
-                    Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
-                    final Double canvasX = screenBoundsCanvas.getMinX();
-                    final Double canvasY = screenBoundsCanvas.getMinY();
+        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getButton() == MouseButton.SECONDARY) {
+                //Canvas pozíciója a scene-en
+                Bounds boundsCanvas = canvas.getBoundsInLocal();
+                Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
+                final Double canvasX = screenBoundsCanvas.getMinX();
+                final Double canvasY = screenBoundsCanvas.getMinY();
 
-                    //ContextMenu pozíciója a scene-en
-                    Double x = event.getSceneX() - canvasX;
-                    Double y = event.getSceneY() - canvasY;
+                //ContextMenu pozíciója a scene-en
+                Double x = event.getSceneX() - canvasX;
+                Double y = event.getSceneY() - canvasY;
 
-                    if (isCluster(x, y)) {
-                        contextMenu.show(canvas, event.getScreenX(), event.getScreenY());
-                    }
+                if (isCluster(x, y)) {
+                    contextMenu.show(canvas, event.getScreenX(), event.getScreenY());
                 }
             }
         });
 
         //Contex Menu eltüntetése
-        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-            public void handle(MouseEvent event) {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    contextMenu.hide();
-                }
+        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                contextMenu.hide();
             }
         });
 
         //Node hozzáadása
-        addNodeMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
+        addNodeMenuItem.setOnAction(event -> {
+            //Pane pozíciója a screen-en
+            Bounds boundsPane = borderPane.getBoundsInLocal();
+            Bounds screenBoundsPane = borderPane.localToScreen(boundsPane);
+            Double paneX = screenBoundsPane.getMinX();
+            Double paneY = screenBoundsPane.getMinY();
 
-                //Pane pozíciója a screen-en
-                Bounds boundsPane = borderPane.getBoundsInLocal();
-                Bounds screenBoundsPane = borderPane.localToScreen(boundsPane);
-                Double paneX = screenBoundsPane.getMinX();
-                Double paneY = screenBoundsPane.getMinY();
+            //Canvas pozíciója a scene-en
+            Bounds boundsCanvas = canvas.getBoundsInLocal();
+            Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
+            final Double canvasX = screenBoundsCanvas.getMinX();
+            final Double canvasY = screenBoundsCanvas.getMinY();
 
-                //Canvas pozíciója a scene-en
-                Bounds boundsCanvas = canvas.getBoundsInLocal();
-                Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
-                final Double canvasX = screenBoundsCanvas.getMinX();
-                final Double canvasY = screenBoundsCanvas.getMinY();
+            //ContextMenu pozíciója a scene-en
+            MenuItem thisItem = (MenuItem) event.getSource();
+            ContextMenu parentMenu = thisItem.getParentPopup();
+            Double x = parentMenu.getAnchorX() - paneX - canvasX;
+            Double y = parentMenu.getAnchorY() - paneY - canvasY;
 
-                //ContextMenu pozíciója a scene-en
-                MenuItem thisItem = (MenuItem) event.getSource();
-                ContextMenu parentMenu = (ContextMenu) thisItem.getParentPopup();
-                Double x = parentMenu.getAnchorX() - paneX - canvasX;
-                Double y = parentMenu.getAnchorY() - paneY - canvasY;
-
-                try {
-                    network.addNode(findCluster(x, y));
-                    drawCanvas(network);
-                } catch (Exception e) {
-                    errorDialog("No more place for a new node!");
-                }
+            try {
+                network.addNode(findCluster(x, y));
+                drawCanvas(network);
+                statusBar.setText("Added new node");
+            } catch (IndexOutOfBoundsException e) {
+                errorDialog("No more place for a new node!");
+            } catch (IllegalStateException e) {
+                errorDialog("Invariant violation! The spare space have to be more than half of any cluster size!");
             }
         });
 
         //Node eltávolítása
-        removeNodeMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
+        removeNodeMenuItem.setOnAction(event -> {
+            //Pane pozíciója a screen-en
+            Bounds boundsPane = borderPane.getBoundsInLocal();
+            Bounds screenBoundsPane = borderPane.localToScreen(boundsPane);
+            Double paneX = screenBoundsPane.getMinX();
+            Double paneY = screenBoundsPane.getMinY();
 
-                //Pane pozíciója a screen-en
-                Bounds boundsPane = borderPane.getBoundsInLocal();
-                Bounds screenBoundsPane = borderPane.localToScreen(boundsPane);
-                Double paneX = screenBoundsPane.getMinX();
-                Double paneY = screenBoundsPane.getMinY();
+            //Canvas pozíciója a scene-en
+            Bounds boundsCanvas = canvas.getBoundsInLocal();
+            Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
+            final Double canvasX = screenBoundsCanvas.getMinX();
+            final Double canvasY = screenBoundsCanvas.getMinY();
 
-                //Canvas pozíciója a scene-en
-                Bounds boundsCanvas = canvas.getBoundsInLocal();
-                Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
-                final Double canvasX = screenBoundsCanvas.getMinX();
-                final Double canvasY = screenBoundsCanvas.getMinY();
+            //ContextMenu pozíciója a scene-en
+            MenuItem thisItem = (MenuItem) event.getSource();
+            ContextMenu parentMenu = thisItem.getParentPopup();
+            Double x = parentMenu.getAnchorX() - paneX - canvasX;
+            Double y = parentMenu.getAnchorY() - paneY - canvasY;
 
-                //ContextMenu pozíciója a scene-en
-                MenuItem thisItem = (MenuItem) event.getSource();
-                ContextMenu parentMenu = (ContextMenu) thisItem.getParentPopup();
-                Double x = parentMenu.getAnchorX() - paneX - canvasX;
-                Double y = parentMenu.getAnchorY() - paneY - canvasY;
-
-                try {
-                    network.removeNode(findCluster(x, y));
-                    drawCanvas(network);
-                } catch (Exception e) {
-                    errorDialog("The cluster is empty!");
-                }
+            try {
+                network.removeNode(findCluster(x, y));
+                drawCanvas(network);
+                statusBar.setText("Removed node");
+            } catch (Exception e) {
+                errorDialog("The cluster is empty!");
             }
         });
 
         //Cluster eltávolítása
-        removeClusterMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
+        removeClusterMenuItem.setOnAction(event -> {
+            //Pane pozíciója a screen-en
+            Bounds boundsPane = borderPane.getBoundsInLocal();
+            Bounds screenBoundsPane = borderPane.localToScreen(boundsPane);
+            Double paneX = screenBoundsPane.getMinX();
+            Double paneY = screenBoundsPane.getMinY();
 
-                //Pane pozíciója a screen-en
-                Bounds boundsPane = borderPane.getBoundsInLocal();
-                Bounds screenBoundsPane = borderPane.localToScreen(boundsPane);
-                Double paneX = screenBoundsPane.getMinX();
-                Double paneY = screenBoundsPane.getMinY();
+            //Canvas pozíciója a scene-en
+            Bounds boundsCanvas = canvas.getBoundsInLocal();
+            Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
+            final Double canvasX = screenBoundsCanvas.getMinX();
+            final Double canvasY = screenBoundsCanvas.getMinY();
 
-                //Canvas pozíciója a scene-en
-                Bounds boundsCanvas = canvas.getBoundsInLocal();
-                Bounds screenBoundsCanvas = canvas.localToScene(boundsCanvas);
-                final Double canvasX = screenBoundsCanvas.getMinX();
-                final Double canvasY = screenBoundsCanvas.getMinY();
+            //ContextMenu pozíciója a scene-en
+            MenuItem thisItem = (MenuItem) event.getSource();
+            ContextMenu parentMenu = thisItem.getParentPopup();
+            Double x = parentMenu.getAnchorX() - paneX - canvasX;
+            Double y = parentMenu.getAnchorY() - paneY - canvasY;
 
-                //ContextMenu pozíciója a scene-en
-                MenuItem thisItem = (MenuItem) event.getSource();
-                ContextMenu parentMenu = (ContextMenu) thisItem.getParentPopup();
-                Double x = parentMenu.getAnchorX() - paneX - canvasX;
-                Double y = parentMenu.getAnchorY() - paneY - canvasY;
-
-                try {
-                    network.removeCluster(findCluster(x, y));
-                    drawCanvas(network);
-                } catch (Exception e) {
-                    errorDialog("No more cluster!");
-                }
+            try {
+                network.removeCluster(findCluster(x, y));
+                drawCanvas(network);
+                statusBar.setText("Removed cluster");
+            } catch (IndexOutOfBoundsException e) {
+                errorDialog("No more cluster!");
+            } catch (IllegalStateException e) {
+                errorDialog("Invariant violation! The spare space have to be more than half of any cluster size!");
             }
         });
-    }
-
-    //endregion
-
-    //region test
-    public void test() {
-        this.network = new Network();
-        //network.testStress();
-        network.testSave();
-        network.testLoad();
-    }
-
-    public void errorDialog(String error) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setContentText(error);
-        alert.showAndWait();
     }
     //endregion
 
@@ -368,11 +251,11 @@ public class AppController implements Initializable {
         }
     }
 
-    public void drawCanvas(Network network){
-        drawCanvas(network,false);
+    private void drawCanvas(Network network) {
+        drawCanvas(network, false);
     }
-    
-    public void drawCanvas(Network network,Boolean showRequests) {
+
+    private void drawCanvas(Network network, Boolean showRequests) {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         Integer actClusterSize = network.getClusters().size();
 
@@ -385,7 +268,7 @@ public class AppController implements Initializable {
             for (Integer j = 0; j < size; j++) {
                 for (Integer i = 0; i < size; i++) {
                     if (processed < actClusterSize) {
-                        drawCluster(0 + i * fieldWidth, 0 + j * fieldHeight, fieldWidth, fieldHeight,processed,network.getClusters().get(j*size + i).getSize());
+                        drawCluster(0 + i * fieldWidth, 0 + j * fieldHeight, fieldWidth, fieldHeight, processed + 1, network.getClusters().get(j * size + i).getSize());
                         processed = processed + 1;
                     } else {
                         break;
@@ -393,173 +276,14 @@ public class AppController implements Initializable {
                 }
             }
         }
-        
-        if(showRequests){
-            List<RequestItem> rList = new ArrayList<>();
-            for (Request request: network.getRequests()) {
-                List<Node> nList = new ArrayList<>();
-                network.getClusters().stream()
-                        .forEach(cluster -> cluster.getNodes()
-                                .forEach(node -> nList.add(node)));
-                
-                Integer iterSrc = 0;
-                Boolean lSrc = false;
-                for (; !lSrc && iterSrc < nList.size(); iterSrc++) {
-                    if(nList.get(iterSrc).getId().equals(request.getSrc())){
-                        lSrc = true;
-                    }
-                }
-                if(!lSrc){
-                    iterSrc = -1;
-                }
 
-                Integer iterDst = 0;
-                Boolean lDst = false;
-                for (; !lDst && iterDst < nList.size(); iterDst++) {
-                    if(nList.get(iterDst).getId().equals(request.getDst())){
-                        lDst = true;
-                    }
-                }
-                if(!lDst){
-                    iterDst = -1;
-                }
-                
-                Integer iterCSrc = 0;
-                Boolean lCSrc = false;
-                for(;!lCSrc && iterCSrc < network.getClusters().size();iterCSrc++){
-                    if(iterSrc > network.getClusters().get(iterCSrc).getNodes().size()){
-                        iterSrc = iterSrc - network.getClusters().get(iterCSrc).getNodes().size();
-                    } else {
-                        lCSrc = true;
-                    }
-                }
-                if(!lCSrc){
-                    iterCSrc = -1;
-                }
-
-                Integer iterCDst = 0;
-                Boolean lCDst = false;
-                for(;!lCDst && iterCDst < network.getClusters().size();iterCDst++){
-                    if(iterDst > network.getClusters().get(iterCDst).getNodes().size()){
-                        iterDst = iterDst - network.getClusters().get(iterCDst).getNodes().size();
-                    } else {
-                        lCDst = true;
-                    }
-                }
-                if(!lCDst){
-                    iterCDst = -1;
-                }
-                rList.add(new RequestItem(iterSrc-1,iterDst-1,iterCSrc-1,iterCDst-1));
-            }
-
-            Integer size = factorization(actClusterSize);
-
-            Double sizeRateCluster = 0.60;
-            Double clusterWidth = fieldWidth * sizeRateCluster;
-            Double clusterHeight = fieldWidth * sizeRateCluster;
-
-            Double sizeRateNode = 0.8;
-            Double nodeWidth = clusterWidth * sizeRateNode;
-            Double nodeHeight = clusterHeight * sizeRateNode;
-
-
-            for (RequestItem rItem: rList) {
-                Double addSrcClusterX = new Double(rItem.getClusterSrc() % size);
-                Double addSrcClusterY = new Double(rItem.getClusterSrc() / size);
-                Double addDstClusterX = new Double(rItem.getClusterDst() % size);
-                Double addDstClusterY = new Double(rItem.getClusterDst() / size);
-
-                Double addSrcNodeX = new Double(rItem.getNodeSrc() % size);
-                Double addSrcNodeY = new Double(rItem.getNodeSrc() / size);
-                Double addDstNodeX = new Double(rItem.getNodeDst() % size);
-                Double addDstNodeY = new Double(rItem.getNodeDst() / size);
-
-                Double nodeSize = nodeHeight / network.getClusterSize();
-                
-                            //mezők eltolása
-                double x1 = addSrcClusterX * fieldWidth +
-                        //eltolás a canvas szélétől
-                        ((fieldWidth - clusterWidth) / 2)
-                        //+ addSrcNodeX * nodeWidth
-                        //eltolás a klaszter szélétől
-                        + ((clusterWidth - nodeWidth) / 2);
-                double y1 = addSrcClusterY * fieldHeight +
-                        ((fieldHeight - clusterHeight) / 2)
-                        + rItem.getNodeSrc() * nodeSize
-                        + ((clusterHeight - nodeHeight) / 2);
-                double x2 = addDstClusterX * fieldWidth
-                        + ((fieldWidth - clusterWidth) / 2)
-                        //+ addDstNodeX * nodeWidth
-                       + ((clusterWidth - nodeWidth) / 2);
-                double y2 = addDstClusterY * fieldHeight
-                        + ((fieldHeight - clusterHeight) / 2)
-                        + rItem.getNodeDst() * nodeSize
-                        + ((clusterHeight - nodeHeight) / 2);
-
-                drawArrow(x1,y1,x2,y2);
-            }
-        }
-
-    }
-
-    public void handleAuto(ActionEvent actionEvent) {
-        autoCrep();
-    }
-
-    public void autoCrep() {
-        Platform.runLater(() -> {
-                scheduledExecutorService.schedule(new Runnable() {
-                                                      @Override
-                                                      public void run() {
-                                                          network.generateRequests();
-                                                          network.CREP();
-                                                          drawCanvas(network,showRequestsBox.isSelected());
-                                                          statusBar.setText("AutoCrep started!");
-                                                      }
-                                                  },
-                        2,
-                        TimeUnit.SECONDS);
-    });
-    }
-
-    public void handleStopbutton(ActionEvent actionEvent) {
-        scheduledExecutorService.shutdown();
-        statusBar.setText("AutoCrep stopped!");
-    }
-
-
-    private class RequestItem{
-        Integer nodeSrc;
-        Integer nodeDst;
-        Integer clusterSrc;
-        Integer clusterDst;
-
-        public RequestItem(Integer nodeSrc, Integer nodeDst, Integer clusterSrc, Integer clusterDst) {
-            this.nodeSrc = nodeSrc;
-            this.nodeDst = nodeDst;
-            this.clusterSrc = clusterSrc;
-            this.clusterDst = clusterDst;
-        }
-
-        public Integer getNodeSrc() {
-            return nodeSrc;
-        }
-
-        public Integer getNodeDst() {
-            return nodeDst;
-        }
-
-        public Integer getClusterSrc() {
-            return clusterSrc;
-        }
-
-        public Integer getClusterDst() {
-            return clusterDst;
+        if (showRequests) {
+            List<RequestItem> rList = collectRequestItems();
+            drawRequests(rList, actClusterSize);
         }
     }
 
-    public void drawCluster(Double x, Double y, Double fieldWidth, Double fieldHeight, Integer cId, Integer nodeSize) {
-
+    private void drawCluster(Double x, Double y, Double fieldWidth, Double fieldHeight, Integer cId, Integer nodeSize) {
         Double sizeRate = 0.60;
         Double clusterWidth = fieldWidth * sizeRate;
         Double clusterHeight = fieldWidth * sizeRate;
@@ -573,23 +297,15 @@ public class AppController implements Initializable {
         gc.setLineDashes(1, 1);
         gc.strokeRect(xShift, yShift, clusterWidth, clusterHeight);
 
-        gc.fillText("clusterId: " + cId.toString(),x + fieldWidth * 0.05,y + fieldHeight * 0.95);
+        gc.fillText("clusterId: " + cId.toString(), x + fieldWidth * 0.05, y + fieldHeight * 0.95);
 
-        Double nodeShiftX = clusterWidth / network.getClusterSize();
         Double nodeShiftY = clusterHeight / network.getClusterSize();
 
         Integer processed = 0;
 
         for (Integer i = 0; i < network.getClusterSize(); i++) {
             if (processed < nodeSize) {
-                drawNode(xShift, yShift + i * nodeShiftY, clusterWidth * sizeRate, clusterHeight / network.getClusterSize(),processed,true);
-                Node actNode = network.getClusters().get(cId).getNodes().get(i);
-                /*if (network.getGraph() != null && network.getGraph().findComponent(actNode.getId()) != null){
-
-                    //Komponens kirajzolás
-                    drawComponents(xShift, yShift + i * nodeShiftY, clusterWidth * sizeRate, clusterHeight / network.getClusterSize(),
-                            network.getGraph().findComponent(actNode.getId()).getId().toString());
-                }*/
+                drawNode(xShift, yShift + i * nodeShiftY, clusterWidth * sizeRate, clusterHeight / network.getClusterSize(), processed + 1, true);
                 processed = processed + 1;
             } else {
                 drawNode(xShift, yShift + i * nodeShiftY, clusterWidth * sizeRate, clusterHeight / network.getClusterSize());
@@ -597,11 +313,11 @@ public class AppController implements Initializable {
         }
     }
 
-    public void drawNode(Double x, Double y, Double clusterWidth, Double clusterHeight) {
-        drawNode(x, y, clusterWidth, clusterHeight,null,false);
+    private void drawNode(Double x, Double y, Double clusterWidth, Double clusterHeight) {
+        drawNode(x, y, clusterWidth, clusterHeight, null, false);
     }
 
-    public void drawNode(Double x, Double y, Double clusterWidth, Double clusterHeight, Integer nodeId, Boolean set) {
+    private void drawNode(Double x, Double y, Double clusterWidth, Double clusterHeight, Integer nodeId, Boolean set) {
         Double sizeRate = 0.8;
         Double nodeWidth = clusterWidth * sizeRate;
         Double nodeHeight = clusterHeight * sizeRate;
@@ -618,30 +334,55 @@ public class AppController implements Initializable {
             gc.setGlobalAlpha(0.3);
             gc.fillRect(xShift, yShift, clusterWidth, clusterHeight * sizeRate);
             gc.setGlobalAlpha(1);
-            gc.fillText("nId: " + nodeId.toString(),xShift + 10, yShift + (clusterHeight / 2));
+            gc.fillText("nId: " + nodeId.toString(), xShift + 10, yShift + (clusterHeight / 2));
         }
     }
 
-    void drawComponents(Double x, Double y, Double clusterWidth, Double clusterHeight,String componentId){
-        Double sizeRate = 0.8;
-        Double nodeWidth = clusterWidth * sizeRate;
-        Double nodeHeight = clusterHeight * sizeRate;
+    private void drawRequests(List<RequestItem> rList, Integer clusterSize) {
+        Integer size = factorization(clusterSize);
 
-        Double xShift = x + (clusterWidth - nodeWidth) / 2;
-        Double yShift = y + (clusterHeight - nodeHeight) / 2;
+        Double sizeRateCluster = 0.60;
+        Double clusterWidth = fieldWidth * sizeRateCluster;
+        Double clusterHeight = fieldWidth * sizeRateCluster;
 
-        gc.setStroke(Color.RED);
-        gc.setFill(Color.BLACK);
-        gc.setLineWidth(2);
-        gc.setLineDashes(1, 1);
-        gc.strokeRect(xShift, yShift, clusterWidth, clusterHeight * sizeRate);
-        gc.fillText("cId: " + componentId,xShift + (clusterWidth - 10), yShift + (clusterHeight / 2));
+        Double sizeRateNode = 0.8;
+        Double nodeWidth = clusterWidth * sizeRateNode;
+        Double nodeHeight = clusterHeight * sizeRateNode;
+
+        for (RequestItem rItem : rList) {
+            Double addSrcClusterX = (double) (rItem.getClusterSrc() % size);
+            Double addSrcClusterY = (double) (rItem.getClusterSrc() / size);
+            Double addDstClusterX = (double) (rItem.getClusterDst() % size);
+            Double addDstClusterY = (double) (rItem.getClusterDst() / size);
+
+            Double nodeSize = nodeHeight / network.getClusterSize();
+
+            //mezők eltolása
+            double x1 = addSrcClusterX * fieldWidth +
+                    //eltolás a canvas szélétől
+                    ((fieldWidth - clusterWidth) / 2)
+                    //eltolás a klaszter szélétől
+                    + ((clusterWidth - nodeWidth) / 2);
+            double y1 = addSrcClusterY * fieldHeight +
+                    ((fieldHeight - clusterHeight) / 2)
+                    + rItem.getNodeSrc() * nodeSize
+                    + ((clusterHeight - nodeHeight) / 2);
+            double x2 = addDstClusterX * fieldWidth
+                    + ((fieldWidth - clusterWidth) / 2)
+                    + ((clusterWidth - nodeWidth) / 2);
+            double y2 = addDstClusterY * fieldHeight
+                    + ((fieldHeight - clusterHeight) / 2)
+                    + rItem.getNodeDst() * nodeSize
+                    + ((clusterHeight - nodeHeight) / 2);
+
+            drawArrow(x1, y1, x2, y2);
+        }
     }
 
-    void drawArrow(double x1, double y1, double x2, double y2) {
+    private void drawArrow(double x1, double y1, double x2, double y2) {
         Integer arrowSize = 8;
-        Double dx = new Double(x2 - x1);
-        Double dy = new Double(y2 - y1);
+        Double dx = x2 - x1;
+        Double dy = y2 - y1;
         double angle = Math.atan2(dy, dx);
         Integer len = new Double(Math.sqrt(dx * dx + dy * dy)).intValue();
 
@@ -661,17 +402,18 @@ public class AppController implements Initializable {
     //endregion
 
     //region handler
-    public void runCrepHandler(ActionEvent actionEvent) {
-        network.CREP();
-        drawCanvas(network,showRequestsBox.isSelected());
+    public void handleNewButton() {
+        network = new Network();
+        drawCanvas(network);
+        statusBar.setText("Created new network");
     }
 
-    public void handleCloseButton(ActionEvent actionEvent) {
+    public void handleCloseButton() {
         Platform.exit();
         System.exit(0);
     }
 
-    public void handleLoadButton(ActionEvent actionEvent) {
+    public void handleLoadButton() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open");
         FileChooser.ExtensionFilter txtExtension = new FileChooser.ExtensionFilter("JSON", "*.json");
@@ -684,14 +426,17 @@ public class AppController implements Initializable {
             try {
                 network = load.read();
                 drawCanvas(network);
+                clusterSize.setValue(network.getClusterSize());
+                migrationCost.setValue(network.getMigrationCost());
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //statusBar.setText("Loaded: " + loadFile.getTotalLoaded().toString() + " objects");
+            statusBar.setText("Loaded from " + file.getName());
         }
     }
 
-    public void handleSaveButton(ActionEvent actionEvent) {
+    public void handleSaveButton() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save");
         FileChooser.ExtensionFilter txtExtension = new FileChooser.ExtensionFilter("JSON", "*.json");
@@ -706,28 +451,180 @@ public class AppController implements Initializable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //statusBar.setText("Loaded: " + loadFile.getTotalLoaded().toString() + " objects");
+            statusBar.setText("Saved to " + file.getName());
         }
     }
 
-    public void handleAddCluster(ActionEvent actionEvent) {
+    public void handleAddCluster() {
         network.addCluster();
         drawCanvas(network);
+        statusBar.setText("Added new cluster");
     }
 
-    public void handleNewButton(ActionEvent actionEvent) {
-        network = new Network();
-        drawCanvas(network);
+    public void handleRequests() {
+        try {
+            network.generateRequests();
+            statusBar.setText("Added new " + network.getRequests().size() + " requests");
+            drawCanvas(network, showRequestsBox.isSelected());
+        } catch (IllegalStateException e) {
+            errorDialog("Add a cluster and at least two nodes!");
+        }
     }
 
-    public void handleRequests(ActionEvent actionEvent) {
-        network.generateRequests();
-        statusBar.setText("New requests: " + network.getRequests().size());
-        drawCanvas(network,showRequestsBox.isSelected());
+    public void handleRequstsBox() {
+        drawCanvas(network, showRequestsBox.isSelected());
     }
 
-    public void handleRequstsBox(ActionEvent actionEvent) {
-        drawCanvas(network,showRequestsBox.isSelected());
+    public void handleRunCrep() {
+        try {
+            network.CREP();
+            drawCanvas(network, showRequestsBox.isSelected());
+            statusBar.setText("Ran CREP");
+        } catch (IllegalStateException e) {
+            errorDialog("Firstly add requests!");
+        }
+    }
+    //endregion
+
+    //region util
+    //Hibaüzenet
+    private void errorDialog(String error) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setContentText(error);
+        alert.showAndWait();
+    }
+    //endregion
+
+    //region calculate
+    //Klaszter meghatározása a canvas-on
+    private Integer findCluster(Double x, Double y) {
+        Integer factor = factorization(network.getClusters().size());
+        Integer processed = 0;
+
+        for (Integer j = 0; j < factor; j++) {
+            for (Integer i = 0; i < factor; i++) {
+                if (processed < network.getClusters().size()) {
+                    Double minX = i * fieldWidth;
+                    Double maxX = minX + fieldWidth;
+                    Double minY = j * fieldHeight;
+                    Double maxY = minY + fieldHeight;
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                        return i + j * factor;
+                    }
+                    processed = processed + 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Boolean isCluster(Double x, Double y) {
+        Integer factor = factorization(network.getClusters().size());
+        Integer processed = 0;
+
+        for (Integer j = 0; j < factor; j++) {
+            for (Integer i = 0; i < factor; i++) {
+                if (processed < network.getClusters().size()) {
+                    Double minX = i * fieldWidth;
+                    Double maxX = minX + fieldWidth;
+                    Double minY = j * fieldHeight;
+                    Double maxY = minY + fieldHeight;
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                        return true;
+                    }
+                    processed = processed + 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        return false;
+    }
+
+    //alaprajz méretének meghatározása
+    private Integer factorization(Integer num) {
+        return new Double(Math.ceil(Math.sqrt(num))).intValue();
+    }
+
+    //segédfüggvény a request kirajzoláshoz
+    private List<RequestItem> collectRequestItems() {
+        List<RequestItem> rList = new ArrayList<>();
+        for (Request request : network.getRequests()) {
+            List<Node> nList = new ArrayList<>();
+            network.getClusters().forEach(cluster -> cluster.getNodes()
+                    .forEach(nList::add));
+
+            Integer iterSrc = 0;
+            Boolean lSrc = false;
+            for (; !lSrc && iterSrc < nList.size(); iterSrc++) {
+                if (nList.get(iterSrc).getId().equals(request.getSrc())) {
+                    lSrc = true;
+                }
+            }
+
+            Integer iterDst = 0;
+            Boolean lDst = false;
+            for (; !lDst && iterDst < nList.size(); iterDst++) {
+                if (nList.get(iterDst).getId().equals(request.getDst())) {
+                    lDst = true;
+                }
+            }
+
+            Integer iterCSrc = 0;
+            Boolean lCSrc = false;
+            for (; !lCSrc && iterCSrc < network.getClusters().size(); iterCSrc++) {
+                if (iterSrc > network.getClusters().get(iterCSrc).getNodes().size()) {
+                    iterSrc = iterSrc - network.getClusters().get(iterCSrc).getNodes().size();
+                } else {
+                    lCSrc = true;
+                }
+            }
+
+            Integer iterCDst = 0;
+            Boolean lCDst = false;
+            for (; !lCDst && iterCDst < network.getClusters().size(); iterCDst++) {
+                if (iterDst > network.getClusters().get(iterCDst).getNodes().size()) {
+                    iterDst = iterDst - network.getClusters().get(iterCDst).getNodes().size();
+                } else {
+                    lCDst = true;
+                }
+            }
+            rList.add(new RequestItem(iterSrc - 1, iterDst - 1, iterCSrc - 1, iterCDst - 1));
+        }
+        return rList;
+    }
+
+    //segédosztály a request kirajzoláshoz
+    private class RequestItem {
+        final Integer nodeSrc;
+        final Integer nodeDst;
+        final Integer clusterSrc;
+        final Integer clusterDst;
+
+        private RequestItem(Integer nodeSrc, Integer nodeDst, Integer clusterSrc, Integer clusterDst) {
+            this.nodeSrc = nodeSrc;
+            this.nodeDst = nodeDst;
+            this.clusterSrc = clusterSrc;
+            this.clusterDst = clusterDst;
+        }
+
+        private Integer getNodeSrc() {
+            return nodeSrc;
+        }
+
+        private Integer getNodeDst() {
+            return nodeDst;
+        }
+
+        private Integer getClusterSrc() {
+            return clusterSrc;
+        }
+
+        private Integer getClusterDst() {
+            return clusterDst;
+        }
     }
     //endregion
 }

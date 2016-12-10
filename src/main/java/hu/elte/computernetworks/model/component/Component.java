@@ -2,33 +2,30 @@ package hu.elte.computernetworks.model.component;
 
 import hu.elte.computernetworks.model.Node;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Andras Makoviczki on 2016. 11. 28..
  */
 public class Component {
     //region fields
-    private UUID id;
-    private List<Node> nodes;
+    private final UUID id;
+    private final List<Node> nodes;
     private Integer reservedSpace;
     //endregion
 
     //region constructor
-    public Component(){
+    public Component() {
         this(new ArrayList<>());
     }
 
     public Component(List<Node> nodes) {
-        this(nodes,1);
-    }
-
-    public Component(List<Node> nodes, Integer reservedSpace) {
         this.id = UUID.randomUUID();
         this.nodes = nodes;
-        this.reservedSpace = reservedSpace;
+        this.reservedSpace = 1;
     }
-
     //endregion
 
     //region getter setter
@@ -40,14 +37,6 @@ public class Component {
         return nodes;
     }
 
-    public void setNodes(List<Node> nodes) {
-        this.nodes = nodes;
-    }
-
-    public Integer getSize(){
-        return nodes.size();
-    }
-
     public Integer getReservedSpace() {
         return reservedSpace;
     }
@@ -56,8 +45,14 @@ public class Component {
         this.reservedSpace = reservedSpace;
     }
 
-    public Boolean isSingleton(){
-        return (getSize() == 1) ? true : false;
+    public Integer getSize() {
+        return nodes.size();
+    }
+    //endregion
+
+    //region util
+    public Boolean isSingleton() {
+        return (getSize() == 1);
     }
     //endregion
 }
